@@ -1,11 +1,12 @@
 package duration_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	duration "github.com/channelmeter/iso8601duration"
-	"github.com/stretchr/testify/assert"
+	"github.com/skyportsystems/iso8601duration"
+	"github.com/skyportsystems/testify/assert"
 )
 
 func TestFromString(t *testing.T) {
@@ -13,11 +14,26 @@ func TestFromString(t *testing.T) {
 
 	// test with bad format
 	_, err := duration.FromString("asdf")
-	assert.Equal(t, err, duration.ErrBadFormat)
+	assert.Equal(t, err, duration.ErrBadFormat, "Bad format")
+
+	_, err = duration.FromString("P1x")
+	assert.Equal(t, err, duration.ErrBadFormat, "Partially bad format")
+
+	_, err = duration.FromString("P1")
+	assert.Equal(t, err, duration.ErrBadFormat, "Incomplete format")
+
+	_, err = duration.FromString("P0Y")
+	assert.Equal(t, err, fmt.Errorf("year cannot be 0"), "No zeros")
+
+	_, err = duration.FromString("P1YT0H")
+	assert.Equal(t, err, fmt.Errorf("hour cannot be 0"), "No partial zeros")
+
+	_, err = duration.FromString("P1YT23Hhello")
+	assert.Equal(t, err, duration.ErrBadFormat, "Substring")
 
 	// test with month
 	_, err = duration.FromString("P1M")
-	assert.Equal(t, err, duration.ErrNoMonth)
+	assert.Equal(t, err, duration.ErrNoMonth, "No months")
 
 	// test with good full string
 	dur, err := duration.FromString("P1Y2DT3H4M5S")

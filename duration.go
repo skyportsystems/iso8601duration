@@ -20,8 +20,8 @@ var (
 
 	tmpl = template.Must(template.New("duration").Parse(`P{{if .Years}}{{.Years}}Y{{end}}{{if .Weeks}}{{.Weeks}}W{{end}}{{if .Days}}{{.Days}}D{{end}}{{if .HasTimePart}}T{{end }}{{if .Hours}}{{.Hours}}H{{end}}{{if .Minutes}}{{.Minutes}}M{{end}}{{if .Seconds}}{{.Seconds}}S{{end}}`))
 
-	full = regexp.MustCompile(`P((?P<year>\d+)Y)?((?P<month>\d+)M)?((?P<day>\d+)D)?(T((?P<hour>\d+)H)?((?P<minute>\d+)M)?((?P<second>\d+)S)?)?`)
-	week = regexp.MustCompile(`P((?P<week>\d+)W)`)
+	full = regexp.MustCompile(`^P((?P<year>\d+)Y)?((?P<month>\d+)M)?((?P<day>\d+)D)?(T((?P<hour>\d+)H)?((?P<minute>\d+)M)?((?P<second>\d+)S)?)?$`)
+	week = regexp.MustCompile(`^P((?P<week>\d+)W)$`)
 )
 
 type Duration struct {
@@ -61,6 +61,13 @@ func FromString(dur string) (*Duration, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Check that no component is explicitly 0,
+		// e.g. PT60M0S
+		if val == 0 {
+			return nil, fmt.Errorf("%s cannot be 0", name)
+		}
+
 		switch name {
 		case "year":
 			d.Years = val
